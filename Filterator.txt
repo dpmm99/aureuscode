@@ -1,0 +1,52 @@
+[8r-] postfix
+Mutations like 8 -> 2b+
+2b+r- (that is, 2 + b - r)
+
+For inequality comparison
+Numbers that are similar logarithmically are considered equal
+Maybe fixed set of values like 0.5 1 5 50. No zero.
+
+One byte per term, which are mapped something like this:
+0	+	(+)
+1	-	(-)
+2	*	(*)
+3	/	(/)
+4	^	pow(abs(),abs())	Do not use with a negative operand, hence the abs()s
+5	log	log(abs())	Has a dummy operand (probably fine to ignore the second operand. Even if you change the base, it's the same as a constant multiple.)
+6	%	mod(,)
+7	sine	sin()	Has a dummy operand (probably fine to ignore it, but you might sum or multiply them or something). Accepts an angle in radians.
+8-15	Possible fixed but more complex operations
+16	Red	texture(t,UV).r
+17	Green	texture(t,UV).g
+18	Blue	texture(t,UV).b
+19	Hue	TODO
+20	Saturation	TODO
+21	Value	TODO
+22	Brightness	TODO
+23	BY-Chroma	TODO
+24	RG-Chroma	TODO
+25-31	(Possibly unused; may want to pack the possibilities better)
+32	0.1
+33	0.3
+34	0.7
+35	0.9
+36	1.5
+37	2.5
+38	6
+39	10
+40	-0.1
+41	-0.3
+42	-0.7
+43	-0.9
+44	-1.5
+45	-2.5
+46	-6
+47	-10
+
+Prepare right at the start:
+Store the input image as RGB, HSV, and Brightness/Chroma. (I opted against this because the OpenGL is faster than a human can consume/judge the resultant images.)
+Thought about storing the index of each pixel with the min or max value for a given channel, but it wouldn't actually help with the normalization.
+
+The expression comparison system for ensuring no duplicates are made... doesn't need to be perfect. Expressions can be equivalent if ordering changes in certain (numerous) ways. It may be sufficient to sum all the operators and operands and use that as a hash. This would eliminate many possibilities that are not equivalent, too. Imagine R plus G times B. (R+G)*B, R*G+B, R*(G+B) all evaluate to different numbers but would be considered equivalent under this system.
+There's also the problem of normalization which I cannot fix in the GLSL version of the expression. I would have to generate a sample of the values before generating the GLSL to normalize them. This sample of values could be used as a hash for much greater performance in determining equivalent expressions. However, it would have a greater range (larger hash table) and just summing them without modifying the different samples in different ways would consider photo-negatives to be the same.
+If you obtain normalization parameters or comparison parameters via sampling, you should sample the permutations of more than just the edge-case values: 25, 50, 127, 191, 255. Comparison parameters would be post-normalization.
